@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커플링 검색기-(주)성일기공</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">커플링 검색기-(주)성일기공</h1>
+        <p class="text-center text-gray-600 mb-8">
+            사양을 입력하여 제품을 검색하세요.
+        </p>
+        
+        <!-- 구글 시트 URL 입력 섹션 (숨김) -->
+        <div id="url-input-section" class="hidden">
+            <label for="google-sheet-url" class="block text-sm font-medium text-gray-700 mb-2">
+                구글 시트 URL
+            </label>
+            <input type="text" id="google-sheet-url"
+                   value="https://docs.google.com/spreadsheets/d/1eWF3PI5Bk_FjSv7c-gK-mSLS6PuLGn3gm3kg806V5fA/edit?gid=0#gid=0"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+        </div>
+
+        <!-- 검색 필터 섹션 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- 1. 제품 타입 -->
+            <div>
+                <label for="coupling-type" class="block text-sm font-medium text-gray-700 mb-2">
+                    제품 타입
+                </label>
+                <select id="coupling-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    <option value="">전체</option>
+                </select>
+            </div>
+            
+            <!-- 2. 체결 타입 -->
+            <div>
+                <label for="fastening-type" class="block text-sm font-medium text-gray-700 mb-2">
+                    체결 타입
+                </label>
+                <select id="fastening-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    <option value="">전체</option>
+                </select>
+            </div>
+            
+            <!-- 3. 내경1 -->
+            <div>
+                <label for="inner-dia1" class="block text-sm font-medium text-gray-700 mb-2">
+                    내경1 (mm)
+                </label>
+                <input type="number" id="inner-dia1" placeholder="예: 12" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+            </div>
+            
+            <!-- 4. 내경2 -->
+            <div>
+                <label for="inner-dia2" class="block text-sm font-medium text-gray-700 mb-2">
+                    내경2 (mm)
+                </label>
+                <input type="number" id="inner-dia2" placeholder="예: 12" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+            </div>
+
+            <!-- 5. 외경 -->
+            <div>
+                <label for="outer-dia" class="block text-sm font-medium text-gray-700 mb-2">
+                    외경 (mm)
+                </label>
+                <input type="number" id="outer-dia" placeholder="예: 25" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+            </div>
+
+            <!-- 6. 길이 -->
+            <div>
+                <label for="length" class="block text-sm font-medium text-gray-700 mb-2">
+                    길이 (mm)
+                </label>
+                <input type="number" id="length" placeholder="예: 30" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+            </div>
+            
+            <!-- 7. 허용/상용 토크 -->
+            <div>
+                <label for="max-torque" class="block text-sm font-medium text-gray-700 mb-2">
+                    허용/상용 토크 (N·m)
+                </label>
+                <input type="number" id="max-torque" placeholder="예: 5" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+            </div>
+        </div>
+
+        <div class="text-center mt-6">
+            <button onclick="searchCouplings()" 
+                    class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
+                제품 검색
+            </button>
+        </div>
+
+        <!-- 검색 조건 안내 -->
+        <div class="mt-4 text-center text-sm text-gray-500">
+            <p>※ 입력된 외경보다 10% 큰 제품까지 검색됩니다.</p>
+            <p>※ 입력된 길이보다 10% 긴 제품까지 검색됩니다.</p>
+        </div>
+
+        <!-- 제품 목록 섹션 -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">검색 결과</h2>
+            <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 검색 결과가 여기에 동적으로 추가됩니다 -->
+            </div>
+            <div id="no-results" class="hidden text-center text-gray-500 mt-8">
+                데이터를 불러오고 있습니다. 잠시만 기다려주세요.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedCouplings = [];
+        const FIXED_GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1eWF3PI5Bk_FjSv7c-gK-mSLS6PuLGn3gm3kg806V5fA/edit?gid=0#gid=0";
+        
+        window.onload = function() {
+            fetchGoogleSheetData();
+        };
+
+        // 구글 시트에서 데이터를 불러오는 함수
+        async function fetchGoogleSheetData() {
+            const googleSheetUrl = FIXED_GOOGLE_SHEET_URL;
+
+            try {
+                // URL에서 spreadsheetId 추출
+                const spreadsheetIdMatch = googleSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                if (!spreadsheetIdMatch || spreadsheetIdMatch.length < 2) {
+                    throw new Error('유효한 구글 시트 URL이 아닙니다.');
+                }
+                const spreadsheetId = spreadsheetIdMatch[1];
+                
+                // gid (시트 ID)를 추출하거나 기본값 0을 사용
+                const gidMatch = googleSheetUrl.match(/gid=([0-9]+)/);
+                const gid = gidMatch ? gidMatch[1] : 0;
+                
+                // 구글 시트 데이터를 CSV 형식으로 가져오는 URL
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+                
+                const response = await fetch(csvUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                
+                // CSV 데이터 파싱
+                const data = csvText.trim().split('\n').map(row => {
+                    const cells = [];
+                    let currentCell = '';
+                    let inQuote = false;
+                    for (let i = 0; i < row.length; i++) {
+                        const char = row[i];
+                        if (char === '"' && inQuote) {
+                            inQuote = false;
+                        } else if (char === '"' && !inQuote) {
+                            inQuote = true;
+                        } else if (char === ',' && !inQuote) {
+                            cells.push(currentCell.trim());
+                            currentCell = '';
+                        } else {
+                            currentCell += char;
+                        }
+                    }
+                    cells.push(currentCell.trim());
+                    return cells;
+                });
+
+                uploadedCouplings = parseSheetData(data);
+                
+                populateDropdowns(uploadedCouplings);
+                alert(`구글 시트에서 ${uploadedCouplings.length}개의 제품 데이터를 성공적으로 불러왔습니다!`);
+                searchCouplings(true); 
+
+            } catch (error) {
+                console.error('Error fetching Google Sheet data:', error);
+                const noResultsMessage = document.getElementById('no-results');
+                noResultsMessage.textContent = '구글 시트 데이터를 불러오는 데 실패했습니다. URL을 확인하거나, 시트가 "웹에 게시"되었는지 확인해주세요.';
+                noResultsMessage.classList.remove('hidden');
+            }
+        }
+        
+        function parseSheetData(data) {
+            const products = [];
+            if (data.length < 2) return [];
+
+            const headers = data[0].map(h => h.trim());
+            const colMap = {
+                '품명': 'code',
+                'TYPE': 'type',
+                '체결TYPE': 'fastening_type',
+                '외경': 'outer_dia',
+                '길이': 'length',
+                '최소내경': 'min_inner_dia',
+                '최대내경': 'max_inner_dia',
+                '허용/상용 토크': 'torque',
+                '비틀림강성': 'torsional_stiffness',
+                '편각': 'angular_misalignment',
+                '편심': 'parallel_misalignment',
+                '엔드플레이': 'end_play'
+            };
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (row.length > 0 && row[0]) {
+                    const product = {};
+                    headers.forEach((header, index) => {
+                        const propName = colMap[header];
+                        if (propName) {
+                            product[propName] = row[index] === '' ? null : row[index];
+                        }
+                    });
+                    
+                    products.push(product);
+                }
+            }
+            return products;
+        }
+
+        // 드롭다운 메뉴를 동적으로 채우는 함수
+        function populateDropdowns(couplings) {
+            populateSelect(document.getElementById('coupling-type'), couplings, 'type');
+            populateSelect(document.getElementById('fastening-type'), couplings, 'fastening_type');
+        }
+        
+        function populateSelect(selectElement, data, key) {
+            selectElement.innerHTML = '<option value="">전체</option>';
+            const uniqueValues = [...new Set(data.map(item => item[key]))].filter(value => value);
+            uniqueValues.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                selectElement.appendChild(option);
+            });
+        }
+
+        function searchCouplings() {
+            const couplings = uploadedCouplings.length > 0 ? uploadedCouplings : [];
+
+            const innerDia1 = document.getElementById('inner-dia1').value ? parseFloat(document.getElementById('inner-dia1').value) : undefined;
+            const innerDia2 = document.getElementById('inner-dia2').value ? parseFloat(document.getElementById('inner-dia2').value) : undefined;
+            const outerDia = document.getElementById('outer-dia').value ? parseFloat(document.getElementById('outer-dia').value) : undefined;
+            const length = document.getElementById('length').value ? parseFloat(document.getElementById('length').value) : undefined;
+            const maxTorque = document.getElementById('max-torque').value ? parseFloat(document.getElementById('max-torque').value) : undefined;
+            const type = document.getElementById('coupling-type').value;
+            const fasteningType = document.getElementById('fastening-type').value;
+
+            const resultsContainer = document.getElementById('results-container');
+            const noResultsMessage = document.getElementById('no-results');
+
+            resultsContainer.innerHTML = '';
+            noResultsMessage.classList.add('hidden');
+
+            if (couplings.length === 0) {
+                noResultsMessage.textContent = '데이터를 불러오는 중입니다...';
+                noResultsMessage.classList.remove('hidden');
+                return;
+            }
+
+            const filteredCouplings = couplings.filter(coupling => {
+                const typeMatch = !type || coupling.type === type;
+                const fasteningTypeMatch = !fasteningType || coupling.fastening_type === fasteningType;
+                
+                const innerDia1Match = (innerDia1 === undefined) || (innerDia1 >= coupling.min_inner_dia && innerDia1 <= coupling.max_inner_dia);
+                const innerDia2Match = (innerDia2 === undefined) || (innerDia2 >= coupling.min_inner_dia && innerDia2 <= coupling.max_inner_dia);
+
+                const outerDiaMatch = (outerDia === undefined) || (coupling.outer_dia <= outerDia) || (outerDia !== undefined && coupling.outer_dia > outerDia && coupling.outer_dia <= outerDia * 1.1);
+                const lengthMatch = (length === undefined) || (coupling.length <= length) || (length !== undefined && coupling.length > length && coupling.length <= length * 1.1);
+                const torqueMatch = (maxTorque === undefined) || coupling.torque >= maxTorque;
+
+                return typeMatch && fasteningTypeMatch && innerDia1Match && innerDia2Match && outerDiaMatch && lengthMatch && torqueMatch;
+            });
+
+            if (filteredCouplings.length > 0) {
+                filteredCouplings.forEach(coupling => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 flex flex-col items-center text-center";
+                    
+                    const innerDiameterText = (coupling.min_inner_dia === coupling.max_inner_dia) 
+                        ? `${coupling.min_inner_dia} mm`
+                        : `${coupling.min_inner_dia} ~ ${coupling.max_inner_dia} mm`;
+
+                    card.innerHTML = `
+                        <h3 class="text-lg font-bold text-gray-800">${coupling.code}</h3>
+                        <p class="text-sm text-gray-600 mb-2">${coupling.type} 타입 - ${coupling.fastening_type}</p>
+                        <div class="text-sm text-gray-700">
+                            <p><span class="font-semibold">내경 범위:</span> ${innerDiameterText}</p>
+                            <p><span class="font-semibold">외경:</span> ${coupling.outer_dia} mm</p>
+                            <p><span class="font-semibold">길이:</span> ${coupling.length} mm</p>
+                            <p><span class="font-semibold">허용/상용 토크:</span> ${coupling.torque} N·m</p>
+                            <p><span class="font-semibold">비틀림 강성:</span> ${coupling.torsional_stiffness ? parseFloat(coupling.torsional_stiffness).toLocaleString() : '-'} N·m/rad</p>
+                            <p><span class="font-semibold">허용 편각:</span> ${coupling.angular_misalignment || '-'} °</p>
+                            <p><span class="font-semibold">허용 편심:</span> ${coupling.parallel_misalignment || '-'} mm</p>
+                            <p><span class="font-semibold">허용 엔드플레이:</span> ${coupling.end_play || '-'} mm</p>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(card);
+                });
+            } else {
+                noResultsMessage.textContent = '검색 조건에 맞는 제품이 없습니다.';
+                noResultsMessage.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
