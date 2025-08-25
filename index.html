@@ -84,22 +84,32 @@
                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
             </div>
 
-            <!-- 5. 외경 -->
-            <div>
+            <!-- 5. 외경 (범위) -->
+            <div class="lg:col-span-1">
                 <label for="outer-dia" class="block text-sm font-medium text-gray-700 mb-2">
                     외경 (mm)
                 </label>
-                <input type="number" id="outer-dia" placeholder="예: 25" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="min-outer-dia" placeholder="최소값"
+                           class="w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    <span class="text-gray-500">~</span>
+                    <input type="number" id="max-outer-dia" placeholder="최대값"
+                           class="w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
             </div>
-
-            <!-- 6. 길이 -->
-            <div>
+            
+            <!-- 6. 길이 (범위) -->
+            <div class="lg:col-span-1">
                 <label for="length" class="block text-sm font-medium text-gray-700 mb-2">
                     길이 (mm)
                 </label>
-                <input type="number" id="length" placeholder="예: 30" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="min-length" placeholder="최소값" 
+                           class="w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    <span class="text-gray-500">~</span>
+                    <input type="number" id="max-length" placeholder="최대값" 
+                           class="w-1/2 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
             </div>
             
             <!-- 7. 허용/상용 토크 -->
@@ -110,6 +120,22 @@
                 <input type="number" id="max-torque" placeholder="예: 5" 
                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
             </div>
+
+            <!-- 8. 안전 계수 -->
+            <div>
+                <label for="safety-factor" class="block text-sm font-medium text-gray-700 mb-2">
+                    안전 계수
+                </label>
+                <input type="number" id="safety-factor" value="1" min="1" step="0.1"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center mb-4">
+            <input type="checkbox" id="enable-tolerance" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="enable-tolerance" class="ml-2 block text-sm text-gray-900">
+                최대값 +10% 포함 검색 (길이, 외경)
+            </label>
         </div>
 
         <div class="flex flex-col md:flex-row justify-center gap-4 mt-6">
@@ -125,8 +151,7 @@
 
         <!-- 검색 조건 안내 -->
         <div class="mt-4 text-center text-sm text-gray-500">
-            <p>※ 입력된 외경보다 10% 큰 제품까지 검색됩니다.</p>
-            <p>※ 입력된 길이보다 10% 긴 제품까지 검색됩니다.</p>
+            <!-- 기존 길이 관련 안내 문구는 제거되었습니다. -->
         </div>
 
         <!-- 제품 목록 섹션 -->
@@ -157,6 +182,7 @@
         const resultsSection = document.getElementById('results-section');
         const couplingTypeSelect = document.getElementById('coupling-type');
         const fasteningTypeSelect = document.getElementById('fastening-type');
+        const enableToleranceCheckbox = document.getElementById('enable-tolerance');
 
         // 페이지 로드 시 구글 시트에서 데이터를 가져옵니다.
         window.onload = function() {
@@ -390,11 +416,28 @@
             // 입력 필드에서 값을 가져옵니다. 값이 없으면 undefined로 처리합니다.
             const innerDia1 = document.getElementById('inner-dia1').value ? parseFloat(document.getElementById('inner-dia1').value) : undefined;
             const innerDia2 = document.getElementById('inner-dia2').value ? parseFloat(document.getElementById('inner-dia2').value) : undefined;
-            const outerDia = document.getElementById('outer-dia').value ? parseFloat(document.getElementById('outer-dia').value) : undefined;
-            const length = document.getElementById('length').value ? parseFloat(document.getElementById('length').value) : undefined;
+            const minOuterDia = document.getElementById('min-outer-dia').value ? parseFloat(document.getElementById('min-outer-dia').value) : undefined;
+            let maxOuterDia = document.getElementById('max-outer-dia').value ? parseFloat(document.getElementById('max-outer-dia').value) : undefined;
+            const minLength = document.getElementById('min-length').value ? parseFloat(document.getElementById('min-length').value) : undefined;
+            let maxLength = document.getElementById('max-length').value ? parseFloat(document.getElementById('max-length').value) : undefined;
             const maxTorque = document.getElementById('max-torque').value ? parseFloat(document.getElementById('max-torque').value) : undefined;
+            const safetyFactor = document.getElementById('safety-factor').value ? parseFloat(document.getElementById('safety-factor').value) : 1;
             const type = couplingTypeSelect.value;
             const fasteningType = fasteningTypeSelect.value;
+            const isToleranceEnabled = enableToleranceCheckbox.checked;
+
+            // 체크박스에 따라 최대값에 10% 허용치 적용
+            if (isToleranceEnabled) {
+                if (maxOuterDia !== undefined) {
+                    maxOuterDia = maxOuterDia * 1.1;
+                }
+                if (maxLength !== undefined) {
+                    maxLength = maxLength * 1.1;
+                }
+            }
+            
+            // 안전 계수 적용 (허용/상용 토크 * 안전 계수)
+            const requiredTorque = (maxTorque !== undefined && safetyFactor !== 0) ? maxTorque * safetyFactor : maxTorque;
 
             // 로딩된 데이터가 없으면 메시지를 표시하고 함수를 종료합니다.
             if (uploadedCouplings.length === 0) {
@@ -410,17 +453,19 @@
                 // 내경1, 내경2가 허용 내경 범위에 있는지 확인
                 const innerDia1Match = (innerDia1 === undefined) || (coupling.min_inner_dia !== null && innerDia1 >= coupling.min_inner_dia && innerDia1 <= coupling.max_inner_dia);
                 const innerDia2Match = (innerDia2 === undefined) || (coupling.min_inner_dia !== null && innerDia2 >= coupling.min_inner_dia && innerDia2 <= coupling.max_inner_dia);
+                
+                // 외경 범위: 입력된 최소/최대 외경 사이에 있는지 확인
+                const minOuterDiaMatch = (minOuterDia === undefined) || (coupling.outer_dia !== null && coupling.outer_dia >= minOuterDia);
+                const maxOuterDiaMatch = (maxOuterDia === undefined) || (coupling.outer_dia !== null && coupling.outer_dia <= maxOuterDia);
 
-                // 외경: 입력값보다 작거나, 입력값의 10% 이내인 경우
-                const outerDiaMatch = (outerDia === undefined) || (coupling.outer_dia !== null && coupling.outer_dia <= outerDia * 1.1);
-
-                // 길이: 입력값보다 작거나, 입력값의 10% 이내인 경우
-                const lengthMatch = (length === undefined) || (coupling.length !== null && coupling.length <= length * 1.1);
+                // 길이 범위: 입력된 최소/최대 길이 사이에 있는지 확인
+                const minLengthMatch = (minLength === undefined) || (coupling.length !== null && coupling.length >= minLength);
+                const maxLengthMatch = (maxLength === undefined) || (coupling.length !== null && coupling.length <= maxLength);
 
                 // 허용/상용 토크: 입력값보다 크거나 같은 경우
-                const torqueMatch = (maxTorque === undefined) || (coupling.torque !== null && coupling.torque >= maxTorque);
+                const torqueMatch = (requiredTorque === undefined) || (coupling.torque !== null && coupling.torque >= requiredTorque);
 
-                return typeMatch && fasteningTypeMatch && innerDia1Match && innerDia2Match && outerDiaMatch && lengthMatch && torqueMatch;
+                return typeMatch && fasteningTypeMatch && innerDia1Match && innerDia2Match && minOuterDiaMatch && maxOuterDiaMatch && minLengthMatch && maxLengthMatch && torqueMatch;
             });
 
             // 필터링된 결과가 있으면 카드를 생성하여 표시합니다.
@@ -469,14 +514,20 @@
             // 입력 필드 초기화
             document.getElementById('inner-dia1').value = '';
             document.getElementById('inner-dia2').value = '';
-            document.getElementById('outer-dia').value = '';
-            document.getElementById('length').value = '';
+            document.getElementById('min-outer-dia').value = '';
+            document.getElementById('max-outer-dia').value = '';
+            document.getElementById('min-length').value = '';
+            document.getElementById('max-length').value = '';
             document.getElementById('max-torque').value = '';
+            document.getElementById('safety-factor').value = '1';
 
             // 드롭다운 메뉴 초기화
             couplingTypeSelect.selectedIndex = 0;
             populateFasteningTypeDropdown(); // 제품 타입 초기화 후 체결 타입도 다시 채워줍니다.
             fasteningTypeSelect.selectedIndex = 0;
+            
+            // 체크박스 초기화
+            enableToleranceCheckbox.checked = false;
 
             // 검색 결과 초기화 (화면에서 제거)
             resultsContainer.innerHTML = '';
