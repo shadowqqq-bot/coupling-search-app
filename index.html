@@ -11,7 +11,6 @@
             background-color: #f3f4f6;
             color: #1f2937;
         }
-        /* 로딩 스피너 애니메이션 */
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-left-color: #3b82f6;
@@ -24,487 +23,461 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .custom-dropdown-options::-webkit-scrollbar { width: 6px; }
+        .custom-dropdown-options::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-dropdown-options::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        .custom-dropdown-options::-webkit-scrollbar-thumb:hover { background: #555; }
+        .lang-btn.active, .view-btn.active { background-color: #3b82f6; color: white; }
+        #table-view-container table th, #table-view-container table td {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            vertical-align: middle;
+            text-align: center;
+        }
+        #table-view-container table img {
+            max-width: 60px;
+            height: auto;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">커플링 검색기-(주)성일기공</h1>
-        <p class="text-center text-gray-600 mb-8">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-7xl relative">
+        <div class="absolute top-4 right-4 text-xs text-gray-400 text-right">
+            <div>VER-1.02</div>
+            <div>(CATALOGUE 2025 VOL2.0)</div>
+        </div>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4" data-lang-key="mainTitle">커플링 검색기-(주)성일기공</h1>
+        
+        <div id="lang-switcher" class="text-center mb-4 space-x-2">
+            <button onclick="setLanguage('ko')" class="lang-btn px-3 py-1 text-sm border rounded-md">한국어</button>
+            <button onclick="setLanguage('en')" class="lang-btn px-3 py-1 text-sm border rounded-md">English</button>
+            <button onclick="setLanguage('ja')" class="lang-btn px-3 py-1 text-sm border rounded-md">日本語</button>
+        </div>
+
+        <p class="text-center text-gray-600 mb-8" data-lang-key="subTitle">
             사양을 입력하여 제품을 검색하세요.
         </p>
 
-        <!-- 구글 시트 URL 입력 섹션 (숨김) -->
-        <div id="url-input-section" class="hidden">
-            <label for="google-sheet-url" class="block text-sm font-medium text-gray-700 mb-2">
-                구글 시트 URL
-            </label>
-            <input type="text" id="google-sheet-url"
-                   value="https://docs.google.com/spreadsheets/d/1eWF3PI5Bk_FjSv7c-gK-mSLS6PuLGn3gm3kg806V5fA/edit?gid=0#gid=0"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-        </div>
-
         <!-- 검색 필터 섹션 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <!-- 1. 제품 타입 -->
             <div>
-                <label for="coupling-type" class="block text-sm font-medium text-gray-700 mb-2">
-                    제품 타입
-                </label>
-                <select id="coupling-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                    <option value="">전체</option>
-                </select>
+                <label for="coupling-type" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="couplingType">제품 타입</label>
+                <select id="coupling-type" class="w-full px-4 py-2 border border-gray-300 rounded-md"></select>
             </div>
-            
-            <!-- 2. 체결 타입 -->
             <div>
-                <label for="fastening-type" class="block text-sm font-medium text-gray-700 mb-2">
-                    체결 타입
-                </label>
-                <select id="fastening-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                    <option value="">전체</option>
-                </select>
+                <label for="fastening-type" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="fasteningType">체결 타입</label>
+                <select id="fastening-type" class="w-full px-4 py-2 border border-gray-300 rounded-md"></select>
             </div>
-            
-            <!-- 3. 내경1 -->
+            <div class="relative">
+                <label for="product-code-button" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="productCode">품명</label>
+                <button id="product-code-button" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-md text-left flex justify-between items-center">
+                    <span class="truncate" data-lang-key="all">전체</span>
+                    <svg class="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="product-code-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <input type="text" id="product-code-search" data-lang-placeholder="productCodeSearch" placeholder="품명 검색..." class="w-full px-3 py-2 border-b focus:outline-none">
+                    <div id="product-code-options" class="custom-dropdown-options max-h-48 overflow-y-auto p-2"></div>
+                </div>
+            </div>
             <div>
-                <label for="inner-dia1" class="block text-sm font-medium text-gray-700 mb-2">
-                    내경1 (mm)
-                </label>
-                <input type="number" id="inner-dia1" placeholder="예: 12" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <label for="inner-dia1" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="innerDia1">내경1</label>
+                <input type="number" id="inner-dia1" data-lang-placeholder="example" placeholder="예: 12" class="w-full px-4 py-2 border border-gray-300 rounded-md">
             </div>
-            
-            <!-- 4. 내경2 -->
             <div>
-                <label for="inner-dia2" class="block text-sm font-medium text-gray-700 mb-2">
-                    내경2 (mm)
-                </label>
-                <input type="number" id="inner-dia2" placeholder="예: 12" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <label for="inner-dia2" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="innerDia2">내경2</label>
+                <input type="number" id="inner-dia2" data-lang-placeholder="example" placeholder="예: 12" class="w-full px-4 py-2 border border-gray-300 rounded-md">
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="outerDia">외경</label>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="min-outer-dia" data-lang-placeholder="min" placeholder="최소값" class="w-1/2 px-4 py-2 border rounded-md">
+                    <span class="text-gray-500">~</span>
+                    <input type="number" id="max-outer-dia" data-lang-placeholder="max" placeholder="최대값" class="w-1/2 px-4 py-2 border rounded-md">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="length">길이</label>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="min-length" data-lang-placeholder="min" placeholder="최소값" class="w-1/2 px-4 py-2 border rounded-md">
+                    <span class="text-gray-500">~</span>
+                    <input type="number" id="max-length" data-lang-placeholder="max" placeholder="최대값" class="w-1/2 px-4 py-2 border rounded-md">
+                </div>
+            </div>
+            <div>
+                <label for="max-torque" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="torque">허용/상용 토크</label>
+                <input type="number" id="max-torque" data-lang-placeholder="exampleTorque" placeholder="예: 5" class="w-full px-4 py-2 border rounded-md">
+            </div>
+            <div>
+                <label for="safety-factor" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="safetyFactor">안전 계수</label>
+                <input type="number" id="safety-factor" value="1" min="1" step="0.1" class="w-full px-4 py-2 border rounded-md">
+            </div>
+        </div>
 
-            <!-- 5. 외경 -->
-            <div>
-                <label for="outer-dia" class="block text-sm font-medium text-gray-700 mb-2">
-                    외경 (mm)
-                </label>
-                <input type="number" id="outer-dia" placeholder="예: 25" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-            </div>
-
-            <!-- 6. 길이 -->
-            <div>
-                <label for="length" class="block text-sm font-medium text-gray-700 mb-2">
-                    길이 (mm)
-                </label>
-                <input type="number" id="length" placeholder="예: 30" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-            </div>
-            
-            <!-- 7. 허용/상용 토크 -->
-            <div>
-                <label for="max-torque" class="block text-sm font-medium text-gray-700 mb-2">
-                    허용/상용 토크 (N·m)
-                </label>
-                <input type="number" id="max-torque" placeholder="예: 5" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-            </div>
+        <div class="flex items-center justify-center mb-4">
+            <input type="checkbox" id="enable-tolerance" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+            <label for="enable-tolerance" class="ml-2 block text-sm text-gray-900" data-lang-key="tolerance">최대값 +10% 포함 검색 (길이, 외경)</label>
         </div>
 
         <div class="flex flex-col md:flex-row justify-center gap-4 mt-6">
-            <button onclick="searchCouplings()" id="search-button"
-                    class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
-                제품 검색
-            </button>
-            <button onclick="resetForm()" id="reset-button"
-                    class="w-full md:w-auto px-8 py-3 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition duration-150">
-                초기화
-            </button>
+            <button onclick="searchCouplings()" id="search-button" class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md" data-lang-key="search">제품 검색</button>
+            <button onclick="resetForm()" id="reset-button" class="w-full md:w-auto px-8 py-3 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md" data-lang-key="reset">초기화</button>
         </div>
 
-        <!-- 검색 조건 안내 -->
-        <div class="mt-4 text-center text-sm text-gray-500">
-            <p>※ 입력된 외경보다 10% 큰 제품까지 검색됩니다.</p>
-            <p>※ 입력된 길이보다 10% 긴 제품까지 검색됩니다.</p>
-        </div>
-
-        <!-- 제품 목록 섹션 -->
         <div id="results-section" class="mt-8 hidden">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">검색 결과</h2>
-            <!-- 로딩 상태 메시지 및 스피너 -->
-            <div id="status-message" class="flex items-center justify-content-center p-4 text-gray-500 hidden">
-                <div class="spinner mr-3"></div>
-                <span id="status-text">데이터를 불러오는 중입니다. 잠시만 기다려주세요...</span>
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-2xl font-semibold text-gray-800" data-lang-key="resultsTitle">검색 결과</h2>
+                <div id="view-switcher" class="space-x-2">
+                    <button onclick="setView('card')" class="view-btn px-3 py-1 text-sm border rounded-md active" data-lang-key="cardView">카드 보기</button>
+                    <button onclick="setView('table')" class="view-btn px-3 py-1 text-sm border rounded-md" data-lang-key="tableView">표 보기</button>
+                </div>
             </div>
-            <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 검색 결과가 여기에 동적으로 추가됩니다 -->
+            <div id="status-message" class="flex items-center justify-center p-4 text-gray-500 hidden">
+                <div class="spinner mr-3"></div>
+                <span id="status-text"></span>
+            </div>
+            <div id="card-view-container">
+                <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+            <div id="table-view-container" class="hidden overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 bg-gray-50" style="text-transform: none;">
+                        <tr id="table-header"></tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        // 전역 변수로 커플링 데이터를 저장합니다.
         let uploadedCouplings = [];
-        // 고정된 구글 시트 URL. 사용자가 변경할 수 없도록 상수로 설정합니다.
+        let lastFilteredResults = [];
+        let currentLanguage = 'ko';
+        let currentView = 'card';
         const FIXED_GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1eWF3PI5Bk_FjSv7c-gK-mSLS6PuLGn3gm3kg806V5fA/edit?gid=0#gid=0";
         
-        // DOM 요소들을 변수에 할당하여 재사용성을 높입니다.
-        const resultsContainer = document.getElementById('results-container');
-        const statusMessageDiv = document.getElementById('status-message');
-        const statusTextSpan = document.getElementById('status-text');
-        const searchButton = document.getElementById('search-button');
-        const resultsSection = document.getElementById('results-section');
-        const couplingTypeSelect = document.getElementById('coupling-type');
-        const fasteningTypeSelect = document.getElementById('fastening-type');
-
-        // 페이지 로드 시 구글 시트에서 데이터를 가져옵니다.
-        window.onload = function() {
-            fetchGoogleSheetData();
+        const translations = {
+            ko: {
+                locale: "ko-KR", mainTitle: "커플링 검색기-(주)성일기공", subTitle: "사양을 입력하여 제품을 검색하세요.", couplingType: "제품 타입", fasteningType: "체결 타입", productCode: "품명", all: "전체", productCodeSearch: "품명 검색...", innerDia1: "내경1", innerDia2: "내경2", example: "예: 12", outerDia: "외경", min: "최소값", max: "최대값", length: "길이", torque: "허용/상용 토크", exampleTorque: "예: 5", safetyFactor: "안전 계수", tolerance: "최대값 +10% 포함 검색 (길이, 외경)", search: "제품 검색", reset: "초기화", resultsTitle: "검색 결과", noResults: "검색 조건에 맞는 제품이 없습니다.", loading: "데이터를 불러오는 중입니다. 잠시만 기다려주세요...", loadSuccess: (c) => `${c}개의 제품 데이터를 성공적으로 불러왔습니다.`, selected: (c) => `${c}개 선택됨`, innerDiaRange: "내경 범위", torsionalStiffness: "비틀림 강성", angularMisalignment: "허용 편각", parallelMisalignment: "허용 편심", endPlay: "허용 엔드플레이", productTypeInfo: (type, fastening) => `${type || '-'} 타입 - ${fastening || '-'}`, cardView: "카드 보기", tableView: "표 보기", thImage: "이미지"
+            },
+            en: {
+                locale: "en-US", mainTitle: "Coupling Finder - SUNGIL", subTitle: "Enter specifications to search for products.", couplingType: "Product Type", fasteningType: "Fastening Type", productCode: "Product Code", all: "All", productCodeSearch: "Search product code...", innerDia1: "Inner Dia. 1", innerDia2: "Inner Dia. 2", example: "e.g., 12", outerDia: "Outer Dia.", min: "Min", max: "Max", length: "Length", torque: "Allowable/Rated Torque", exampleTorque: "e.g., 5", safetyFactor: "Safety Factor", tolerance: "Include +10% tolerance for max values (Length, OD)", search: "Search Products", reset: "Reset", resultsTitle: "Search Results", noResults: "No products match the search criteria.", loading: "Loading data, please wait...", loadSuccess: (c) => `Successfully loaded ${c} product data.`, selected: (c) => `${c} items selected`, innerDiaRange: "Inner Dia. Range", torsionalStiffness: "Torsional Stiffness", angularMisalignment: "Allowable Angular Misalignment", parallelMisalignment: "Allowable Parallel Misalignment", endPlay: "Allowable End-Play", productTypeInfo: (type, fastening) => `${type || '-'} TYPE - ${fastening || '-'}`, cardView: "Card View", tableView: "Table View", thImage: "Image"
+            },
+            ja: {
+                locale: "ja-JP", mainTitle: "カップリング検索機 - (株)ソンイル", subTitle: "仕様を入力して製品を検索してください。", couplingType: "製品タイプ", fasteningType: "締結タイプ", productCode: "品番", all: "すべて", productCodeSearch: "品番検索...", innerDia1: "内径1", innerDia2: "内径2", example: "例: 12", outerDia: "外径", min: "最小値", max: "最大値", length: "長さ", torque: "許容/常用トルク", exampleTorque: "例: 5", safetyFactor: "安全係数", tolerance: "最大値に+10%の公差を含めて検索（長さ、外径）", search: "製品検索", reset: "リセット", resultsTitle: "検索結果", noResults: "検索条件に合う製品がありません。", loading: "データを読み込み中です。しばらくお待ちください...", loadSuccess: (c) => `${c}件の製品データを正常に読み込みました。`, selected: (c) => `${c}件選択済み`, innerDiaRange: "内径範囲", torsionalStiffness: "ねじり剛性", angularMisalignment: "許容偏角", parallelMisalignment: "許容偏心", endPlay: "許容エンドプレイ", productTypeInfo: (type, fastening) => `${type || '-'} タイプ - ${fastening || '-'}`, cardView: "カード表示", tableView: "テーブル表示", thImage: "画像"
+            }
         };
 
-        // 제품 타입 드롭다운 변경 시 체결 타입 드롭다운을 업데이트합니다.
-        couplingTypeSelect.addEventListener('change', () => {
-            populateFasteningTypeDropdown();
+        const dom = {
+            resultsContainer: document.getElementById('results-container'), statusMessageDiv: document.getElementById('status-message'), statusTextSpan: document.getElementById('status-text'), searchButton: document.getElementById('search-button'), resultsSection: document.getElementById('results-section'), couplingTypeSelect: document.getElementById('coupling-type'), fasteningTypeSelect: document.getElementById('fastening-type'), enableToleranceCheckbox: document.getElementById('enable-tolerance'), productCodeButton: document.getElementById('product-code-button'), productCodeDropdown: document.getElementById('product-code-dropdown'), productCodeSearch: document.getElementById('product-code-search'), productCodeOptions: document.getElementById('product-code-options'), cardViewContainer: document.getElementById('card-view-container'), tableViewContainer: document.getElementById('table-view-container'), tableHeader: document.getElementById('table-header'), tableBody: document.getElementById('table-body')
+        };
+
+        window.onload = () => { fetchGoogleSheetData(); setLanguage(currentLanguage); };
+        
+        dom.couplingTypeSelect.addEventListener('change', () => { populateFasteningTypeDropdown(); populateProductCodeDropdown(); });
+        dom.fasteningTypeSelect.addEventListener('change', () => populateProductCodeDropdown());
+        dom.productCodeButton.addEventListener('click', () => dom.productCodeDropdown.classList.toggle('hidden'));
+        dom.productCodeSearch.addEventListener('input', () => {
+            const filter = dom.productCodeSearch.value.toUpperCase();
+            const labels = dom.productCodeOptions.getElementsByTagName('label');
+            Array.from(labels).forEach(label => {
+                const txtValue = label.textContent || label.innerText;
+                label.style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+            });
+        });
+        document.addEventListener('click', (event) => {
+            if (!dom.productCodeButton.contains(event.target) && !dom.productCodeDropdown.contains(event.target)) {
+                dom.productCodeDropdown.classList.add('hidden');
+            }
         });
 
-        /**
-         * 구글 시트에서 CSV 형식의 데이터를 가져오는 비동기 함수
-         */
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const t = translations[lang];
+            document.querySelectorAll('[data-lang-key]').forEach(el => el.textContent = t[el.dataset.langKey]);
+            document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = t[el.dataset.langPlaceholder]);
+            document.querySelectorAll('#lang-switcher .lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`#lang-switcher .lang-btn[onclick="setLanguage('${lang}')"]`).classList.add('active');
+            populateDropdowns(uploadedCouplings);
+            updateProductCodeButtonText();
+            renderTableHeader();
+            displayResults();
+        }
+
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('#view-switcher .view-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`#view-switcher .view-btn[onclick="setView('${view}')"]`).classList.add('active');
+            displayResults();
+        }
+
         async function fetchGoogleSheetData() {
-            // 로딩 상태를 표시합니다.
-            showStatusMessage('데이터를 불러오는 중입니다. 잠시만 기다려주세요...', true);
-            searchButton.disabled = true; // 검색 버튼 비활성화
-
-            const googleSheetUrl = FIXED_GOOGLE_SHEET_URL;
-
+            showStatusMessage(translations[currentLanguage].loading, true);
+            dom.searchButton.disabled = true;
             try {
-                // URL에서 spreadsheetId 추출
-                const spreadsheetIdMatch = googleSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                if (!spreadsheetIdMatch || spreadsheetIdMatch.length < 2) {
-                    throw new Error('유효한 구글 시트 URL이 아닙니다.');
-                }
-                const spreadsheetId = spreadsheetIdMatch[1];
-                
-                // gid (시트 ID)를 추출하거나 기본값 0을 사용
-                const gidMatch = googleSheetUrl.match(/gid=([0-9]+)/);
-                const gid = gidMatch ? gidMatch[1] : 0;
-                
-                // 구글 시트 데이터를 CSV 형식으로 가져오는 URL 생성
+                const spreadsheetId = FIXED_GOOGLE_SHEET_URL.match(/\/d\/([a-zA-Z0-9-_]+)/)[1];
+                const gid = FIXED_GOOGLE_SHEET_URL.match(/gid=([0-9]+)/) ? FIXED_GOOGLE_SHEET_URL.match(/gid=([0-9]+)/)[1] : 0;
                 const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-                
                 const response = await fetch(csvUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const csvText = await response.text();
-                
-                // CSV 데이터 파싱
                 const data = parseCsv(csvText);
-
                 uploadedCouplings = parseSheetData(data);
-                
-                // 드롭다운 메뉴를 데이터로 채웁니다.
                 populateDropdowns(uploadedCouplings);
-
-                // 데이터 로딩 성공 메시지를 3초간 표시하고 검색 버튼을 활성화합니다.
-                showStatusMessage(`${uploadedCouplings.length}개의 제품 데이터를 성공적으로 불러왔습니다.`, false);
-                searchButton.disabled = false;
-                setTimeout(() => {
-                    hideStatusMessage();
-                }, 3000);
-
+                showStatusMessage(translations[currentLanguage].loadSuccess(uploadedCouplings.length), false);
+                dom.searchButton.disabled = false;
+                setTimeout(() => hideStatusMessage(), 3000);
             } catch (error) {
                 console.error('Error fetching Google Sheet data:', error);
-                // 오류 메시지를 표시하고 검색 버튼을 비활성화 상태로 둡니다.
                 showStatusMessage('데이터를 불러오는 데 실패했습니다. URL을 확인하거나, 시트가 "웹에 게시"되었는지 확인해주세요.', false);
-                searchButton.disabled = true;
+                dom.searchButton.disabled = true;
             }
         }
 
-        /**
-         * CSV 텍스트를 파싱하여 2D 배열로 반환하는 함수
-         * @param {string} csvText - CSV 형식의 문자열
-         * @returns {string[][]} - 파싱된 데이터 2D 배열
-         */
         function parseCsv(csvText) {
-            // BOM(Byte Order Mark) 제거
-            if (csvText.charCodeAt(0) === 0xFEFF) {
-                csvText = csvText.substring(1);
-            }
-            
+            if (csvText.charCodeAt(0) === 0xFEFF) csvText = csvText.substring(1);
             const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== '');
-            
             return rows.map(row => {
-                const cells = [];
-                let inQuote = false;
-                let currentCell = '';
+                const cells = []; let inQuote = false, currentCell = '';
                 for (let i = 0; i < row.length; i++) {
                     const char = row[i];
-                    if (char === '"') {
-                        if (inQuote && row[i+1] === '"') {
-                            currentCell += '"';
-                            i++;
-                        } else {
-                            inQuote = !inQuote;
-                        }
-                    } else if (char === ',' && !inQuote) {
-                        cells.push(currentCell.trim());
-                        currentCell = '';
-                    } else {
-                        currentCell += char;
-                    }
+                    if (char === '"' && inQuote && row[i+1] === '"') { currentCell += '"'; i++; } 
+                    else if (char === '"') { inQuote = !inQuote; } 
+                    else if (char === ',' && !inQuote) { cells.push(currentCell.trim()); currentCell = ''; } 
+                    else { currentCell += char; }
                 }
-                cells.push(currentCell.trim());
-                return cells;
+                cells.push(currentCell.trim()); return cells;
             });
         }
 
-        /**
-         * 문자열에서 숫자만 추출하여 float로 변환하는 헬퍼 함수
-         * @param {string} value - 변환할 문자열
-         * @returns {number | null} - 변환된 숫자 또는 null
-         */
         function parseNumber(value) {
-            if (value === null || value === '' || typeof value !== 'string') {
-                return null;
-            }
-            // 숫자, 소수점, 마이너스 부호만 남기는 정규식
+            if (value === null || value === '' || typeof value !== 'string') return null;
             const cleanedValue = value.replace(/[^0-9.-]/g, '');
-            // 정규식을 통해 추출된 숫자 부분만 파싱
             const parsed = parseFloat(cleanedValue);
             return isNaN(parsed) ? null : parsed;
         }
 
-        /**
-         * 파싱된 시트 데이터를 제품 객체 배열로 변환하는 함수
-         * @param {string[][]} data - CSV 파싱 결과 2D 배열
-         * @returns {Object[]} - 제품 객체 배열
-         */
         function parseSheetData(data) {
-            const products = [];
             if (data.length < 2) return [];
-
             const headers = data[0].map(h => h.trim());
-            
-            // 헤더 매핑을 더 유연하게 만듭니다.
-            const colMap = {
-                '품명': 'code',
-                'TYPE': 'type',
-                '체결TYPE': 'fastening_type',
-                '외경': 'outer_dia',
-                '길이': 'length',
-                '최소내경': 'min_inner_dia',
-                '최대내경': 'max_inner_dia',
-                '허용/상용 토크': 'torque',
-                '비틀림강성': 'torsional_stiffness',
-                '허용 편각': 'angular_misalignment',
-                '허용 편심': 'parallel_misalignment',
-                '허용 엔드플레이': 'end_play'
-            };
-
-            for (let i = 1; i < data.length; i++) {
-                const row = data[i];
-                if (row.length > 0 && row[0]) {
-                    const product = {};
-                    headers.forEach((header, index) => {
-                        const propName = colMap[header];
-                        if (propName) {
-                            let value = row[index] !== undefined ? row[index].trim() : null;
-                            
-                            if (['outer_dia', 'length', 'min_inner_dia', 'max_inner_dia', 'torque', 'torsional_stiffness', 'angular_misalignment', 'parallel_misalignment'].includes(propName)) {
-                                product[propName] = parseNumber(value);
-                            } else if (propName === 'end_play') {
-                                // 허용 엔드플레이는 '±' 문자를 그대로 유지
-                                product[propName] = value;
-                            } else {
-                                product[propName] = value;
-                            }
-                        }
-                    });
-                    
-                    products.push(product);
-                }
-            }
-            return products;
+            const colMap = {'품명': 'code', 'TYPE': 'type', '체결TYPE': 'fastening_type', '외경': 'outer_dia', '길이': 'length', '최소내경': 'min_inner_dia', '최대내경': 'max_inner_dia', '허용/상용 토크': 'torque', '비틀림강성': 'torsional_stiffness', '허용 편각': 'angular_misalignment', '허용 편심': 'parallel_misalignment', '허용 엔드플레이': 'end_play', '이미지URL': 'image_url'};
+            return data.slice(1).map(row => {
+                if (row.length === 0 || !row[0]) return null;
+                const product = {};
+                headers.forEach((header, index) => {
+                    const propName = colMap[header];
+                    if (propName) {
+                        let value = row[index] !== undefined ? row[index].trim() : null;
+                        if (['outer_dia', 'length', 'min_inner_dia', 'max_inner_dia', 'torque', 'torsional_stiffness', 'angular_misalignment', 'parallel_misalignment'].includes(propName)) {
+                            product[propName] = parseNumber(value);
+                        } else { product[propName] = value; }
+                    }
+                });
+                return product;
+            }).filter(p => p);
         }
 
-        /**
-         * 드롭다운 메뉴를 동적으로 채우는 함수
-         * 페이지 로드 시 제품 타입 드롭다운을 채웁니다.
-         * @param {Object[]} couplings - 커플링 제품 데이터 배열
-         */
         function populateDropdowns(couplings) {
-            populateSelect(couplingTypeSelect, couplings, 'type');
-            populateFasteningTypeDropdown(); // 초기 로딩 시 체결 타입 드롭다운을 채웁니다.
+            populateSelect(dom.couplingTypeSelect, couplings, 'type');
+            populateFasteningTypeDropdown();
+            populateProductCodeDropdown();
         }
-        
-        /**
-         * 제품 타입에 따라 체결 타입 드롭다운을 동적으로 채우는 함수
-         */
+
         function populateFasteningTypeDropdown() {
-            const selectedType = couplingTypeSelect.value;
-            let filteredCouplings = uploadedCouplings;
-
-            if (selectedType) {
-                filteredCouplings = uploadedCouplings.filter(coupling => coupling.type === selectedType);
-            }
-
-            populateSelect(fasteningTypeSelect, filteredCouplings, 'fastening_type');
+            const selectedType = dom.couplingTypeSelect.value;
+            let filtered = uploadedCouplings;
+            if (selectedType) filtered = uploadedCouplings.filter(c => c.type === selectedType);
+            populateSelect(dom.fasteningTypeSelect, filtered, 'fastening_type');
         }
 
-        /**
-         * 드롭다운 요소를 주어진 데이터와 키로 채우는 헬퍼 함수
-         * @param {HTMLSelectElement} selectElement - 채울 <select> 요소
-         * @param {Object[]} data - 데이터 배열
-         * @param {string} key - 데이터에서 고유한 값을 추출할 키
-         */
         function populateSelect(selectElement, data, key) {
-            const currentValue = selectElement.value; // 현재 선택된 값을 저장
-            selectElement.innerHTML = '<option value="">전체</option>';
-            const uniqueValues = [...new Set(data.map(item => item[key]))].filter(value => value);
+            const uniqueValues = [...new Set(data.map(item => item[key]))].filter(Boolean).sort();
+            selectElement.innerHTML = `<option value="">${translations[currentLanguage].all}</option>`;
             uniqueValues.forEach(value => {
                 const option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
+                option.value = value; option.textContent = value;
                 selectElement.appendChild(option);
             });
-            // 기존에 선택된 값이 있으면 다시 선택합니다.
-            if (currentValue && uniqueValues.includes(currentValue)) {
-                selectElement.value = currentValue;
-            }
         }
-        
-        /**
-         * 검색 조건에 따라 커플링을 필터링하고 결과를 표시하는 함수
-         */
-        function searchCouplings() {
-            // 검색 버튼이 눌리면 결과 섹션을 보이게 합니다.
-            resultsSection.classList.remove('hidden');
-            
-            resultsContainer.innerHTML = '';
-            hideStatusMessage();
 
-            // 입력 필드에서 값을 가져옵니다. 값이 없으면 undefined로 처리합니다.
+        function populateProductCodeDropdown() {
+            const selectedType = dom.couplingTypeSelect.value;
+            const selectedFasteningType = dom.fasteningTypeSelect.value;
+            let filtered = uploadedCouplings;
+            if (selectedType) filtered = filtered.filter(c => c.type === selectedType);
+            if (selectedFasteningType) filtered = filtered.filter(c => c.fastening_type === selectedFasteningType);
+            const uniqueCodes = [...new Set(filtered.map(item => item.code))].filter(Boolean).sort();
+            dom.productCodeOptions.innerHTML = '';
+            uniqueCodes.forEach(code => {
+                const optionDiv = document.createElement('label');
+                optionDiv.className = "block px-3 py-1 hover:bg-gray-100 cursor-pointer flex items-center";
+                optionDiv.innerHTML = `<input type="checkbox" class="mr-2" value="${code}"> ${code}`;
+                optionDiv.addEventListener('change', updateProductCodeButtonText);
+                dom.productCodeOptions.appendChild(optionDiv);
+            });
+            updateProductCodeButtonText();
+        }
+
+        function updateProductCodeButtonText() {
+            const checked = dom.productCodeOptions.querySelectorAll('input:checked');
+            const buttonText = dom.productCodeButton.querySelector('span');
+            if (checked.length === 0) buttonText.textContent = translations[currentLanguage].all;
+            else if (checked.length === 1) buttonText.textContent = checked[0].value;
+            else buttonText.textContent = translations[currentLanguage].selected(checked.length);
+        }
+
+        function searchCouplings() {
+            dom.resultsSection.classList.remove('hidden');
+            const t = translations[currentLanguage];
+
             const innerDia1 = document.getElementById('inner-dia1').value ? parseFloat(document.getElementById('inner-dia1').value) : undefined;
             const innerDia2 = document.getElementById('inner-dia2').value ? parseFloat(document.getElementById('inner-dia2').value) : undefined;
-            const outerDia = document.getElementById('outer-dia').value ? parseFloat(document.getElementById('outer-dia').value) : undefined;
-            const length = document.getElementById('length').value ? parseFloat(document.getElementById('length').value) : undefined;
+            const minOuterDia = document.getElementById('min-outer-dia').value ? parseFloat(document.getElementById('min-outer-dia').value) : undefined;
+            let maxOuterDia = document.getElementById('max-outer-dia').value ? parseFloat(document.getElementById('max-outer-dia').value) : undefined;
+            const minLength = document.getElementById('min-length').value ? parseFloat(document.getElementById('min-length').value) : undefined;
+            let maxLength = document.getElementById('max-length').value ? parseFloat(document.getElementById('max-length').value) : undefined;
             const maxTorque = document.getElementById('max-torque').value ? parseFloat(document.getElementById('max-torque').value) : undefined;
-            const type = couplingTypeSelect.value;
-            const fasteningType = fasteningTypeSelect.value;
+            const safetyFactor = document.getElementById('safety-factor').value ? parseFloat(document.getElementById('safety-factor').value) : 1;
+            const type = dom.couplingTypeSelect.value;
+            const fasteningType = dom.fasteningTypeSelect.value;
+            const selectedCodes = Array.from(dom.productCodeOptions.querySelectorAll('input:checked')).map(cb => cb.value);
 
-            // 로딩된 데이터가 없으면 메시지를 표시하고 함수를 종료합니다.
-            if (uploadedCouplings.length === 0) {
-                showStatusMessage('데이터를 불러오는 중입니다. 잠시만 기다려주세요...', true);
-                return;
+            if (dom.enableToleranceCheckbox.checked) {
+                if (maxOuterDia !== undefined) maxOuterDia *= 1.1;
+                if (maxLength !== undefined) maxLength *= 1.1;
             }
+            const requiredTorque = (maxTorque !== undefined && safetyFactor !== 0) ? maxTorque * safetyFactor : maxTorque;
 
-            // 필터링 로직을 실행합니다.
-            const filteredCouplings = uploadedCouplings.filter(coupling => {
-                const typeMatch = !type || (coupling.type && coupling.type.includes(type));
-                const fasteningTypeMatch = !fasteningType || (coupling.fastening_type && coupling.fastening_type.includes(fasteningType));
-                
-                // 내경1, 내경2가 허용 내경 범위에 있는지 확인
-                const innerDia1Match = (innerDia1 === undefined) || (coupling.min_inner_dia !== null && innerDia1 >= coupling.min_inner_dia && innerDia1 <= coupling.max_inner_dia);
-                const innerDia2Match = (innerDia2 === undefined) || (coupling.min_inner_dia !== null && innerDia2 >= coupling.min_inner_dia && innerDia2 <= coupling.max_inner_dia);
+            if (uploadedCouplings.length === 0) { showStatusMessage(t.loading, true); return; }
 
-                // 외경: 입력값보다 작거나, 입력값의 10% 이내인 경우
-                const outerDiaMatch = (outerDia === undefined) || (coupling.outer_dia !== null && coupling.outer_dia <= outerDia * 1.1);
-
-                // 길이: 입력값보다 작거나, 입력값의 10% 이내인 경우
-                const lengthMatch = (length === undefined) || (coupling.length !== null && coupling.length <= length * 1.1);
-
-                // 허용/상용 토크: 입력값보다 크거나 같은 경우
-                const torqueMatch = (maxTorque === undefined) || (coupling.torque !== null && coupling.torque >= maxTorque);
-
-                return typeMatch && fasteningTypeMatch && innerDia1Match && innerDia2Match && outerDiaMatch && lengthMatch && torqueMatch;
+            lastFilteredResults = uploadedCouplings.filter(c => {
+                return (!type || (c.type && c.type.includes(type))) &&
+                       (!fasteningType || (c.fastening_type && c.fastening_type.includes(fasteningType))) &&
+                       (selectedCodes.length === 0 || selectedCodes.includes(c.code)) &&
+                       (innerDia1 === undefined || (c.min_inner_dia !== null && innerDia1 >= c.min_inner_dia && innerDia1 <= c.max_inner_dia)) &&
+                       (innerDia2 === undefined || (c.min_inner_dia !== null && innerDia2 >= c.min_inner_dia && innerDia2 <= c.max_inner_dia)) &&
+                       (minOuterDia === undefined || (c.outer_dia !== null && c.outer_dia >= minOuterDia)) &&
+                       (maxOuterDia === undefined || (c.outer_dia !== null && c.outer_dia <= maxOuterDia)) &&
+                       (minLength === undefined || (c.length !== null && c.length >= minLength)) &&
+                       (maxLength === undefined || (c.length !== null && c.length <= maxLength)) &&
+                       (requiredTorque === undefined || (c.torque !== null && c.torque >= requiredTorque));
             });
+            displayResults();
+        }
 
-            // 필터링된 결과가 있으면 카드를 생성하여 표시합니다.
-            if (filteredCouplings.length > 0) {
-                filteredCouplings.forEach(coupling => {
-                    const card = document.createElement('div');
-                    card.className = "bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 flex flex-col";
-                    
-                    // 내경 정보 표시 (숫자일 때만)
-                    const innerDiameterText = (coupling.min_inner_dia !== null && coupling.max_inner_dia !== null)
-                        ? (coupling.min_inner_dia === coupling.max_inner_dia
-                            ? `${coupling.min_inner_dia} mm`
-                            : `${coupling.min_inner_dia} ~ ${coupling.max_inner_dia} mm`)
-                        : '-';
-                    
-                    // 각 속성 값을 확인하여 유효한 경우에만 표시
-                    const getDisplayValue = (value, unit) => {
-                        return (value !== null) ? `${value} ${unit}` : '-';
-                    };
-                    
-                    card.innerHTML = `
-                        <h3 class="text-lg font-bold text-gray-800 text-center">${coupling.code || '-'}</h3>
-                        <p class="text-sm text-gray-600 mb-2 text-center">${coupling.type || '-'} 타입 - ${coupling.fastening_type || '-'}</p>
-                        <div class="text-sm text-gray-700 space-y-1 mt-auto">
-                            <p><span class="font-semibold">내경 범위:</span> ${innerDiameterText}</p>
-                            <p><span class="font-semibold">외경:</span> ${getDisplayValue(coupling.outer_dia, 'mm')}</p>
-                            <p><span class="font-semibold">길이:</span> ${getDisplayValue(coupling.length, 'mm')}</p>
-                            <p><span class="font-semibold">허용/상용 토크:</span> ${getDisplayValue(coupling.torque, 'N·m')}</p>
-                            <p><span class="font-semibold">비틀림 강성:</span> ${coupling.torsional_stiffness !== null ? coupling.torsional_stiffness.toLocaleString('ko-KR') + ' N·m/rad' : '-'}</p>
-                            <p><span class="font-semibold">허용 편각:</span> ${getDisplayValue(coupling.angular_misalignment, '°')}</p>
-                            <p><span class="font-semibold">허용 편심:</span> ${getDisplayValue(coupling.parallel_misalignment, 'mm')}</p>
-                            <p><span class="font-semibold">허용 엔드플레이:</span> ${coupling.end_play || '-'}</p>
-                        </div>
-                    `;
-                    resultsContainer.appendChild(card);
-                });
+        function displayResults() {
+            hideStatusMessage();
+            const t = translations[currentLanguage];
+            if (currentView === 'card') {
+                dom.cardViewContainer.classList.remove('hidden');
+                dom.tableViewContainer.classList.add('hidden');
+                renderCards(lastFilteredResults);
             } else {
-                showStatusMessage('검색 조건에 맞는 제품이 없습니다.', false);
+                dom.cardViewContainer.classList.add('hidden');
+                dom.tableViewContainer.classList.remove('hidden');
+                renderTable(lastFilteredResults);
             }
+            if (lastFilteredResults.length === 0 && dom.resultsSection.classList.contains('hidden') === false) {
+                showStatusMessage(t.noResults, false);
+            }
+        }
+
+        function renderCards(data) {
+            dom.resultsContainer.innerHTML = '';
+            const t = translations[currentLanguage];
+            data.forEach(c => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 flex flex-col overflow-hidden";
+                const innerDiaText = (c.min_inner_dia !== null && c.max_inner_dia !== null) ? (c.min_inner_dia === c.max_inner_dia ? `${c.min_inner_dia} mm` : `${c.min_inner_dia} ~ ${c.max_inner_dia} mm`) : '-';
+                const getDisplay = (val, unit) => (val !== null) ? `${val} ${unit}` : '-';
+                const placeholderImg = 'https://placehold.co/400x300/e2e8f0/94a3b8?text=No+Image';
+                card.innerHTML = `
+                    <img src="${c.image_url || placeholderImg}" alt="${c.code || '제품 이미지'}" onerror="this.onerror=null;this.src='${placeholderImg}';" class="w-full h-40 object-contain bg-gray-50">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="text-lg font-bold text-gray-800 text-center">${c.code || '-'}</h3>
+                        <p class="text-sm text-gray-600 mb-2 text-center">${t.productTypeInfo(c.type, c.fastening_type)}</p>
+                        <div class="text-sm text-gray-700 space-y-1 mt-auto pt-2 border-t mt-2">
+                            <p><span class="font-semibold">${t.innerDiaRange}:</span> ${innerDiaText}</p>
+                            <p><span class="font-semibold">${t.outerDia} (mm):</span> ${getDisplay(c.outer_dia, '')}</p>
+                            <p><span class="font-semibold">${t.length} (mm):</span> ${getDisplay(c.length, '')}</p>
+                            <p><span class="font-semibold">${t.torque} (N·m):</span> ${getDisplay(c.torque, '')}</p>
+                            <p><span class="font-semibold">${t.torsionalStiffness} (N·m/rad):</span> ${c.torsional_stiffness !== null ? c.torsional_stiffness.toLocaleString(t.locale) : '-'}</p>
+                            <p><span class="font-semibold">${t.angularMisalignment} (°):</span> ${getDisplay(c.angular_misalignment, '')}</p>
+                            <p><span class="font-semibold">${t.parallelMisalignment} (mm):</span> ${getDisplay(c.parallel_misalignment, '')}</p>
+                            <p><span class="font-semibold">${t.endPlay} (mm):</span> ${c.end_play || '-'}</p>
+                        </div>
+                    </div>`;
+                dom.resultsContainer.appendChild(card);
+            });
+        }
+
+        function renderTable(data) {
+            dom.tableBody.innerHTML = '';
+            const t = translations[currentLanguage];
+            const getDisplay = (val) => (val !== null) ? val : '-';
+            const placeholderImg = 'https://placehold.co/400x300/e2e8f0/94a3b8?text=No+Image';
+            data.forEach(c => {
+                const row = dom.tableBody.insertRow();
+                const innerDiaText = (c.min_inner_dia !== null && c.max_inner_dia !== null) ? (c.min_inner_dia === c.max_inner_dia ? `${c.min_inner_dia}` : `${c.min_inner_dia}~${c.max_inner_dia}`) : '-';
+                row.innerHTML = `
+                    <td><img src="${c.image_url || placeholderImg}" alt="${c.code}" onerror="this.onerror=null;this.src='${placeholderImg}';"></td>
+                    <td>${c.code || '-'}</td>
+                    <td>${c.type || '-'}</td>
+                    <td>${c.fastening_type || '-'}</td>
+                    <td>${innerDiaText}</td>
+                    <td>${getDisplay(c.outer_dia)}</td>
+                    <td>${getDisplay(c.length)}</td>
+                    <td>${getDisplay(c.torque)}</td>
+                    <td>${c.torsional_stiffness !== null ? c.torsional_stiffness.toLocaleString(t.locale) : '-'}</td>
+                    <td>${getDisplay(c.angular_misalignment)}</td>
+                    <td>${getDisplay(c.parallel_misalignment)}</td>
+                    <td>${c.end_play || '-'}</td>
+                `;
+            });
         }
         
-        /**
-         * 입력값을 초기화하고 검색 결과를 숨기는 함수
-         */
+        function renderTableHeader() {
+            const t = translations[currentLanguage];
+            dom.tableHeader.innerHTML = `
+                <th>${t.thImage}</th>
+                <th>${t.productCode}</th>
+                <th>${t.couplingType}</th>
+                <th>${t.fasteningType}</th>
+                <th>${t.innerDiaRange} (mm)</th>
+                <th>${t.outerDia} (mm)</th>
+                <th>${t.length} (mm)</th>
+                <th>${t.torque} (N·m)</th>
+                <th>${t.torsionalStiffness} (N·m/rad)</th>
+                <th>${t.angularMisalignment} (°)</th>
+                <th>${t.parallelMisalignment} (mm)</th>
+                <th>${t.endPlay} (mm)</th>
+            `;
+        }
+        
         function resetForm() {
-            // 입력 필드 초기화
-            document.getElementById('inner-dia1').value = '';
-            document.getElementById('inner-dia2').value = '';
-            document.getElementById('outer-dia').value = '';
-            document.getElementById('length').value = '';
-            document.getElementById('max-torque').value = '';
-
-            // 드롭다운 메뉴 초기화
-            couplingTypeSelect.selectedIndex = 0;
-            populateFasteningTypeDropdown(); // 제품 타입 초기화 후 체결 타입도 다시 채워줍니다.
-            fasteningTypeSelect.selectedIndex = 0;
-
-            // 검색 결과 초기화 (화면에서 제거)
-            resultsContainer.innerHTML = '';
-            hideStatusMessage();
-            resultsSection.classList.add('hidden');
+            document.querySelectorAll('input[type=number], input[type=text]').forEach(input => input.value = '');
+            document.getElementById('safety-factor').value = '1';
+            dom.couplingTypeSelect.selectedIndex = 0;
+            dom.fasteningTypeSelect.selectedIndex = 0;
+            dom.enableToleranceCheckbox.checked = false;
+            populateProductCodeDropdown();
+            lastFilteredResults = [];
+            displayResults();
+            dom.resultsSection.classList.add('hidden');
         }
 
-        /**
-         * 상태 메시지를 표시하는 헬퍼 함수
-         * @param {string} text - 표시할 메시지
-         * @param {boolean} showSpinner - 스피너 표시 여부
-         */
         function showStatusMessage(text, showSpinner) {
-            statusTextSpan.textContent = text;
-            statusMessageDiv.classList.remove('hidden');
-            if (showSpinner) {
-                statusMessageDiv.querySelector('.spinner').classList.remove('hidden');
-            } else {
-                statusMessageDiv.querySelector('.spinner').classList.add('hidden');
-            }
+            dom.statusTextSpan.textContent = text;
+            dom.statusMessageDiv.classList.remove('hidden');
+            dom.statusMessageDiv.querySelector('.spinner').style.display = showSpinner ? 'block' : 'none';
         }
 
-        /**
-         * 상태 메시지를 숨기는 헬퍼 함수
-         */
         function hideStatusMessage() {
-            statusMessageDiv.classList.add('hidden');
+            dom.statusMessageDiv.classList.add('hidden');
         }
     </script>
 </body>
 </html>
+
